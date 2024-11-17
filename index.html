@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaghaniCoin</title>
+    <style>
+        body {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: monospace;
+            color: white;
+        }
+
+        #main-contain, #upgrade-section, #tasks-section {
+            display: none;
+        }
+
+        #main-contain.active, #upgrade-section.active, #tasks-section.active {
+            display: block;
+        }
+
+        h1, h2, button, p, span {
+            color: white;
+        }
+
+        #coin-count, #profit-per-hour {
+            font-size: 1.5em;
+            margin: 20px 0;
+        }
+
+        #faghani {
+            border-radius: 50%;
+            padding: 50px;
+            background-color: blue;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .other {
+            padding: 15px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: blue;
+            border: none;
+            color: white;
+            border-radius: 10px;
+        }
+
+        #upgrade-section, #tasks-section {
+            position: fixed;
+            width: 100%;
+            background-color: black;
+            top: 20%;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background-color: #333;
+        }
+
+        .bottom-nav button {
+            flex: 1;
+            padding: 15px;
+            background-color: blue;
+            color: white;
+            border: none;
+            font-size: 1em;
+        }
+
+        #limit-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.9em;
+            color: yellow;
+        }
+
+        /* Alert Styling */
+        #alert-popup {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #00FF00;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+
+        #alert-popup.active {
+            display: block;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-contain" class="active">
+        <h1>FaghaniCoin</h1>
+        <p id="coin-count">Faghani 0</p>
+        <p id="profit-per-hour">Profit per Hour: 0</p>
+        <button id="faghani" onclick="earnCoin()">Faghani</button>
+    </div>
+
+    <div id="upgrade-section">
+        <h2>Upgrades</h2>
+        <div class="upgrade">
+            <span>Card 1 - Profit +500/hour - Cost: <span id="card1-cost">50 Coins</span></span>
+            <button class="other" onclick="buyCard('card1')">Upgrade Card 1</button>
+        </div>
+        <div class="upgrade">
+            <span>Card 2 - Profit +1000/hour - Cost: <span id="card2-cost">100 Coins</span></span>
+            <button class="other" onclick="buyCard('card2')">Upgrade Card 2</button>
+        </div>
+        <div class="upgrade">
+            <span>Gole-Haie-Faghani - Profit +1500/hour - Cost: <span id="card3-cost">200 Coins</span></span>
+            <button class="other" onclick="buyCard('card3')">Gole-Haie-Faghani Card 3</button>
+        </div>
+        <div class="upgrade">
+            <span>Faghani Card - Profit +2000/hour - Cost: <span id="card4-cost">400 Coins</span></span>
+            <button class="other" onclick="buyCard('card4')">Faghani Card</button>
+        </div>
+    </div>
+
+    <div id="tasks-section">
+        <h2>Daily Rewards</h2>
+        <button class="other" onclick="claimDailyReward()">Claim Daily Reward (500 Coins)</button>
+        <h3>Additional Tasks</h3>
+        <button class="other" onclick="watchVideoTask()">Watch a YouTube Video (500 Coins)</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button onclick="showSection('main-contain')">Home</button>
+        <button onclick="showSection('tasks-section')">Tasks</button>
+        <button onclick="showSection('upgrade-section')">Boost</button>
+    </div>
+
+    <p id="limit-info">0/9000</p>
+
+    <!-- Alert Popup -->
+    <div id="alert-popup"></div>
+
+    <script>
+        // Game Variables
+        let coins = 0;
+        let coinsPerClick = 1;
+        let coinLimit = 9000; 
+        let coinLimitCounter = 9000; 
+        let profitPerHour = 0;
+        let coinsPerSecond = 0;
+        let dailyRewardClaimed = false;
+        let videoWatched = false;
+
+        let cardCosts = { card1: 50, card2: 100, card3: 200, card4: 400 };
+        let cardProfits = { card1: 500, card2: 1000, card3: 1500, card4: 2000 };
+
+        function updateDisplay() {
+            document.getElementById('coin-count').textContent = 'Faghani ' + coins.toFixed(2);
+            document.getElementById('limit-info').textContent = `${coinLimitCounter}/9000`;
+            document.getElementById('profit-per-hour').textContent = 'Profit per Hour: ' + profitPerHour;
+        }
+
+        function earnCoin() {
+            if (coinLimitCounter > 0) {
+                const coinsToAdd = Math.min(coinsPerClick, coinLimitCounter); 
+                coins += coinsToAdd;  
+                coinLimitCounter -= coinsToAdd; 
+                updateDisplay(); 
+            } else {
+                showAlert('Faghani limit reached.');
+            }
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('#main-contain, #upgrade-section, #tasks-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function buyCard(card) {
+            if (coins >= cardCosts[card]) {
+                coins -= cardCosts[card];
+                profitPerHour += cardProfits[card];
+                coinsPerSecond = profitPerHour / 3600;
+                cardCosts[card] *= 2; 
+                document.getElementById(`${card}-cost`).textContent = `${cardCosts[card]} Coins`;
+                updateDisplay();
+                showAlert(`Upgraded ${card} successfully!`);
+            } else {
+                showAlert("Not enough coins!");
+            }
+        }
+
+        function claimDailyReward() {
+            if (!dailyRewardClaimed) {
+                coins += 500;
+                dailyRewardClaimed = true;
+                updateDisplay();
+                showAlert("Daily reward claimed!");
+            } else {
+                showAlert("Daily reward already claimed.");
+            }
+        }
+
+        function watchVideoTask() {
+            if (!videoWatched) {
+                videoWatched = true;
+                window.open("https://youtu.be/ayF6zkVS1Ew?si=5YK04Buaaxusfxx-", "_blank");
+                coins += 500;
+                updateDisplay();
+                showAlert("Thank you for watching! Earned 500 coins.");
+            } else {
+                showAlert("Reward already claimed for watching the video.");
+            }
+        }
+
+        function startContinuousProfit() {
+            setInterval(() => {
+                coins += coinsPerSecond;
+                updateDisplay();
+            }, 1000);
+        }
+
+        function increaseCoinLimit() {
+            setInterval(() => {
+                if (coinLimitCounter < coinLimit) {
+                    coinLimitCounter++;
+                    updateDisplay();
+                }
+            }, 5000); 
+        }
+
+        function showAlert(message) {
+            const alertPopup = document.getElementById("alert-popup");
+            alertPopup.textContent = message;
+            
+            if (message === "Not enough coins!" || message === "Daily reward already claimed.") {
+                alertPopup.style.color = "red"; 
+            } else {
+                alertPopup.style.color = "#00FF00";
+            }
+
+            alertPopup.classList.add("active");
+            setTimeout(() => {
+                alertPopup.classList.remove("active");
+            }, 2000); 
+        }
+
+        updateDisplay();
+        startContinuousProfit();
+        increaseCoinLimit();
+    </script>
+</body>
+</html>
